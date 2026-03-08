@@ -88,8 +88,7 @@ export const CartProvider = ({ children }) => {
     const addToCart = async (product, selectedSize, price, qty) => {
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Please log in to add items to your cart.');
-            return;
+            return false;
         }
         try {
             const currentSizeData = product.sizes?.find(s => s.size === selectedSize);
@@ -107,8 +106,10 @@ export const CartProvider = ({ children }) => {
             };
             const { data } = await api.post('/cart/add', payload);
             setCartItems(data?.items || []);
+            return true;
         } catch (error) {
             console.error('Failed to add item to cloud cart:', error);
+            return false;
         }
     };
 
