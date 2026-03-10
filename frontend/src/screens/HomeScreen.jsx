@@ -12,11 +12,19 @@ import img4 from '../assets/media/xyz4.avif';
 
 const ParallaxImageBlock = ({ imageSrc, id, title }) => {
     const ref = useRef(null);
+    const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const { scrollYProgress } = useScroll({
         target: ref,
         offset: ["start end", "end start"]
     });
-    const imageParallaxY = useTransform(scrollYProgress, [0, 1], ['-25%', '25%']);
+    const imageParallaxY = useTransform(scrollYProgress, [0, 1], isDesktop ? ['-10%', '10%'] : ['-25%', '25%']);
 
     return (
         <div ref={ref} id={id} className="mx-auto w-[95%] md:w-full max-w-[1400px] relative aspect-[19/23] md:aspect-[21/10] overflow-hidden rounded-md mb-8 md:mb-16 last:mb-0">
@@ -24,7 +32,7 @@ const ParallaxImageBlock = ({ imageSrc, id, title }) => {
             <motion.img
                 src={imageSrc}
                 alt="Cinematic Prawns"
-                className="absolute inset-0 w-full h-full object-cover object-center scale-[1.5] origin-center pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover object-center scale-[1.5] md:scale-[1.15] origin-center pointer-events-none"
                 style={{ y: imageParallaxY }}
             />
 
