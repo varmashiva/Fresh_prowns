@@ -225,11 +225,10 @@ const HomeScreen = () => {
                         variants={fadeUpVariants}
                         className="absolute top-1/2 left-6 md:left-16 -translate-y-1/2 hidden lg:flex flex-col gap-3 text-sm font-extrabold tracking-[0.2em] text-white/90 drop-shadow-md"
                     >
-                        <a href="#products" className="hover:text-white transition-colors">OCEAN FRESH</a>
-                        <a href="#products" className="hover:text-white transition-colors">PREMIUM QUALITY</a>
-                        <a href="#products" className="hover:text-white transition-colors">SUSTAINABLY CAUGHT</a>
-                        <a href="#products" className="hover:text-white transition-colors">FAST DELIVERY</a>
-                        <a href="#products" className="hover:text-white transition-colors">CHEF APPROVED</a>
+                        <a href="#products" className="hover:text-white transition-colors">HARVEST FRESH</a>
+                        <a href="#products" className="hover:text-white transition-colors">PRECISION CLEANING</a>
+                        <a href="#products" className="hover:text-white transition-colors">FRESHSEAL PACKING</a>
+                        <a href="#products" className="hover:text-white transition-colors">SWIFTDOOR DELIVERY</a>
                     </motion.div>
 
                     {/* Massive Right-Side Title & Description */}
@@ -259,7 +258,7 @@ const HomeScreen = () => {
                             variants={fadeUpVariants}
                             className="text-lg md:text-2xl text-white/90 font-medium mt-8 max-w-3xl drop-shadow-lg leading-relaxed"
                         >
-                            A premium seafood experience shaping exquisite culinary creations through freshness, quality, and forward-thinking sustainability.
+                            Farmed in freshwater ponds by local aqua farmers and packed fresh to deliver clean, high-quality prawns straight to your kitchen.
                         </motion.p>
                     </div>
 
@@ -334,7 +333,7 @@ const HomeScreen = () => {
                             {/* Right Column / Description */}
                             <div className="w-full md:w-[80%] lg:w-[75%] flex flex-col items-start pr-4 md:pr-0">
                                 <p className="text-[#aaaaaa] font-[500] text-base md:text-[20px] max-w-3xl leading-[1.6]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                                    We offer premium selections designed around the scale, style, and culinary ambition of your project. Just tailored freshness.
+                                    Our prawns are responsibly farmed in traditional freshwater ponds (cheruvulu) by experienced aqua farmers across coastal Andhra Pradesh. Harvested fresh and packed the same day to preserve natural taste and quality.
                                 </p>
                             </div>
                         </div>
@@ -540,15 +539,15 @@ const HomeScreen = () => {
                         {/* Paragraph & List */}
                         <div className="w-full md:w-3/4 flex flex-col items-start pr-0">
                             <p className="text-sm md:text-lg text-white/80 font-medium leading-[1.6] mb-16 md:mb-20 max-w-[600px]">
-                                We offer a curated range of premium seafood from concept development to final delivery designed to elevate culinary creations through bold flavors and aesthetic precision.
+                                At Farm To Home, we bring you prawns just the way they leave the farm-fresh, clean, and honest, raised in freshwater ponds by dedicated aqua farmers and carefully harvested to preserve their natural taste and purity.
                             </p>
 
                             <div className="flex flex-col w-full">
                                 {[
-                                    { num: '01', title: 'TIGER PRAWNS' },
-                                    { num: '02', title: 'KING PRAWNS' },
-                                    { num: '03', title: 'WHITELEG SHRIMP' },
-                                    { num: '04', title: 'JUMBO PRAWNS' },
+                                    { num: '01', title: 'HARVEST FRESH' },
+                                    { num: '02', title: 'PRECISION CLEANING' },
+                                    { num: '03', title: 'FRESHSEAL PACKING' },
+                                    { num: '04', title: 'SWIFTDOOR DELIVERY' },
                                 ].map((item, index) => (
                                     <div
                                         key={index}
