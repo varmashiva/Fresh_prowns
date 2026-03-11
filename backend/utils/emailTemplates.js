@@ -33,7 +33,7 @@ export const generateOrderHtml = (order, customerName, isForAdmin = false, statu
         
         <!-- Header -->
         <div style="background-color: #050505; padding: 30px 20px; text-align: center; border-bottom: 3px solid #111;">
-            <img src="https://fresh-prowns.vercel.app/assets/farm%20to%20homelll-D9X5i2G9.png" alt="Farm to Home Logo" style="max-height: 40px; margin-bottom: 10px;" />
+            <img src="https://raw.githubusercontent.com/varmashiva/Fresh_prowns/main/frontend/src/assets/media/farm%20to%20homelll.png" alt="Farm to Home Logo" style="max-height: 40px; margin-bottom: 10px;" />
             <h1 style="color: #ffffff; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; margin: 0;">FARM TO HOME</h1>
             <p style="color: #888888; letter-spacing: 1px; font-size: 12px; margin-top: 5px; text-transform: uppercase;">Pristine Seafood Delivery</p>
         </div>
