@@ -1,6 +1,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/emailService.js';
+import { generateOrderHtml } from '../utils/emailTemplates.js';
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
@@ -157,7 +158,7 @@ export const verifyPayment = async (req, res) => {
                     sendEmail(
                         customerEmail,
                         `Order Confirmed - Farm to Home [${createdOrder._id}]`,
-                        `Hi ${customerName},\n\nYour Farm to Home order has been successfully placed and paid for. Your Order ID is ${createdOrder._id}. Total Amount: ₹${createdOrder.totalPrice}.\n\nThank you for choosing Farm to Home!`
+                        generateOrderHtml(createdOrder, customerName, false)
                     );
                 }
 
@@ -165,7 +166,7 @@ export const verifyPayment = async (req, res) => {
                     sendEmail(
                         adminEmail,
                         `New Order Received - [${createdOrder._id}]`,
-                        `A new order has been placed successfully by ${customerName} (${customerEmail || 'N/A'}).\n\nOrder ID: ${createdOrder._id}\nTotal Amount: ₹${createdOrder.totalPrice}\nCommunity: ${createdOrder.community}\nStatus: ${createdOrder.status}`
+                        generateOrderHtml(createdOrder, customerName, true)
                     );
                 });
 

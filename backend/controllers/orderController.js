@@ -1,5 +1,6 @@
 import Order from '../models/Order.js';
 import { sendEmail } from '../utils/emailService.js';
+import { generateOrderHtml } from '../utils/emailTemplates.js';
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -77,13 +78,13 @@ export const updateOrderStatus = async (req, res) => {
                 sendEmail(
                     customerEmail,
                     `Order Delivered - Farm to Home [${updatedOrder._id}]`,
-                    `Hi ${customerName},\n\nYour Farm to Home order ${updatedOrder._id} has been successfully delivered! Enjoy your premium seafood.`
+                    generateOrderHtml(updatedOrder, customerName, false, 'delivered')
                 );
             } else if (updatedOrder.status === 'cancelled' && customerEmail) {
                 sendEmail(
                     customerEmail,
                     `Order Cancelled - Farm to Home [${updatedOrder._id}]`,
-                    `Hi ${customerName},\n\nYour Farm to Home order ${updatedOrder._id} has been cancelled. If you have any questions, please reach out to our support.`
+                    generateOrderHtml(updatedOrder, customerName, false, 'cancelled')
                 );
             }
 
@@ -130,7 +131,7 @@ export const cancelOrder = async (req, res) => {
                 sendEmail(
                     customerEmail,
                     `Order Cancelled - Farm to Home [${updatedOrder._id}]`,
-                    `Hi ${customerName},\n\nYour Farm to Home order ${updatedOrder._id} has been cancelled.`
+                    generateOrderHtml(updatedOrder, customerName, false, 'cancelled')
                 );
             }
 
