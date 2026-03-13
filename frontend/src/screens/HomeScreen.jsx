@@ -723,12 +723,7 @@ const HomeScreen = () => {
                     </div>
                 </div>
 
-                {/* Copyright */}
-                <div className="mt-12 pt-6 border-t border-white/5 text-center flex flex-col gap-2 pointer-events-auto">
-                    <p className="text-[10px] md:text-xs text-[#666] tracking-[0.2em] uppercase">
-                        &copy; {new Date().getFullYear()} Farm to Home
-                    </p>
-                </div>
+
             </footer>
 
         </div>
