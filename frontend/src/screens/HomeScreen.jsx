@@ -486,7 +486,7 @@ const HomeScreen = () => {
                                                                 navigate('/login');
                                                             }
                                                         }}
-                                                        className="w-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-300 text-[#111] font-[900] py-[14px] md:py-[18px] rounded-[16px] text-center transition-all duration-300 transform hover:scale-[1.02] shadow-[0_0_20px_rgba(74,222,128,0.25)] hover:shadow-[0_0_30px_rgba(74,222,128,0.4)] flex items-center justify-center gap-2 tracking-[0.15em] uppercase text-[11px] md:text-[13px]"
+                                                        className="w-full bg-white hover:bg-[#f0f0f0] text-[#111] font-[900] py-[14px] md:py-[18px] rounded-[16px] text-center transition-all duration-300 transform hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] flex items-center justify-center gap-2 tracking-[0.15em] uppercase text-[11px] md:text-[13px]"
                                                     >
                                                         <span>Add To Cart</span>
                                                         <span className="opacity-30">|</span>
