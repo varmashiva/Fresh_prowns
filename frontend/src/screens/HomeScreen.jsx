@@ -418,7 +418,7 @@ const HomeScreen = () => {
                                                                     {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-black"></div>}
                                                                 </div>
                                                                 <span className={isSelected ? 'text-white' : 'text-white/70'}>{sizeObj.size}</span>
-                                                                <span className={`ml-auto font-mono ${isSelected ? 'text-green-400' : 'text-white/60'}`}>₹{sizeObj.price}</span>
+                                                                <span className={`ml-auto font-mono ${isSelected ? 'text-green-400' : 'text-white/60'}`}>₹{sizeObj.price}<span className="text-[10px] font-sans opacity-60 ml-0.5">/kg</span></span>
                                                             </div>
                                                             <div className={`pl-7 text-[11px] font-[600] tracking-widest uppercase ${outOfStock ? 'text-red-500/80' : isSelected ? 'text-white/60' : 'text-white/30'}`}>
                                                                 {outOfStock ? 'Sold Out' : isSelected ? 'Selection Active' : 'Select Variant'}
