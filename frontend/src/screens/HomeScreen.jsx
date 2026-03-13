@@ -436,6 +436,15 @@ const HomeScreen = () => {
                                             </div>
                                         )}
 
+                                        {/* Bulk Order Contact */}
+                                        <div className="w-full py-3 text-center text-[#888] text-[10px] md:text-[11px] font-semibold tracking-widest uppercase">
+                                            <p className="leading-relaxed">
+                                                <span className="text-[13px] mr-1.5 inline-block -translate-y-[1px]">⚠️</span>
+                                                For bulk orders please contact
+                                                <a href="tel:+918884143699" className="text-white hover:text-green-400 transition-colors ml-1 whitespace-nowrap">+91 8884143699</a>
+                                            </p>
+                                        </div>
+
                                         {/* Bottom Footer: Quantity Selection & Functional Add to Cart */}
                                         <div className="mt-auto w-full flex flex-col sm:flex-row items-center gap-4 border-t border-[#1a1a1a] pt-6 md:pt-8 bg-transparent relative z-10">
 
@@ -493,14 +502,7 @@ const HomeScreen = () => {
                                                 )}
                                             </div>
 
-                                            {/* Bulk Order Contact */}
-                                            <div className="w-full mt-4 py-4 text-center text-[#888] text-[10px] md:text-[11px] font-semibold tracking-widest uppercase">
-                                                <p className="leading-relaxed">
-                                                    <span className="text-[13px] mr-1.5 inline-block -translate-y-[1px]">⚠️</span>
-                                                    For bulk orders please contact
-                                                    <a href="tel:+918884143699" className="text-white hover:text-green-400 transition-colors ml-1 whitespace-nowrap">+91 8884143699</a>
-                                                </p>
-                                            </div>
+
                                         </div>
                                     </div>
                                 </motion.div>
