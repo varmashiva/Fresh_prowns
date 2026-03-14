@@ -2,6 +2,7 @@ import { useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
 import { FaTrash } from 'react-icons/fa';
+import { socket } from '../context/SocketContext';
 
 const CartScreen = () => {
     const { cartItems, updateCartQty, removeFromCart, fetchCart } = useContext(CartContext);
@@ -15,6 +16,14 @@ const CartScreen = () => {
 
     useEffect(() => {
         fetchCart();
+
+        socket.on('productUpdated', () => {
+            fetchCart();
+        });
+
+        return () => {
+            socket.off('productUpdated');
+        };
     }, [fetchCart]);
 
     const hasOutOfStockItem = cartItems.some(
