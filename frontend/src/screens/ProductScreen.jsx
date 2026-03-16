@@ -276,6 +276,14 @@ const ProductScreen = () => {
                                             <a href="tel:+918884143699" className="text-white hover:text-green-400 transition-colors ml-1 whitespace-nowrap">+91 8884143699</a>
                                         </p>
                                     </div>
+
+                                    {/* Delivery Area Info */}
+                                    <div className="w-full mt-2 text-center pb-6">
+                                        <p className="text-[10px] md:text-[11px] text-[#888] font-bold tracking-widest uppercase leading-relaxed">
+                                            📍 Currently, we are serving selected communities in <span className="text-white">LB Nagar</span>,
+                                            <br className="hidden sm:block" /> while bulk orders are delivered across <span className="text-white">Hyderabad</span>.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
