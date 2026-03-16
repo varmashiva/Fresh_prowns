@@ -161,11 +161,11 @@ export const googleCallback = async (req, res) => {
         const token = generateToken(user._id);
 
         // Redirect back to frontend with the token explicitly
-        res.redirect(`https://farmtohome-fresh.vercel.app/auth-success?token=${token}`);
+        res.redirect(`https://www.farmtohome.shop/auth-success?token=${token}`);
 
     } catch (error) {
         console.error('Google Auth Error:', error);
-        res.redirect('https://farmtohome-fresh.vercel.app/login?error=GoogleAuthFailed');
+        res.redirect('https://www.farmtohome.shop/login?error=GoogleAuthFailed');
     }
 };
 

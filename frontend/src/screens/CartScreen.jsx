@@ -2,7 +2,6 @@ import { useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
 import { FaTrash } from 'react-icons/fa';
-import { socket } from '../context/SocketContext';
 
 const CartScreen = () => {
     const { cartItems, updateCartQty, removeFromCart, fetchCart } = useContext(CartContext);
@@ -16,14 +15,6 @@ const CartScreen = () => {
 
     useEffect(() => {
         fetchCart();
-
-        socket.on('productUpdated', () => {
-            fetchCart();
-        });
-
-        return () => {
-            socket.off('productUpdated');
-        };
     }, [fetchCart]);
 
     const hasOutOfStockItem = cartItems.some(
@@ -121,7 +112,7 @@ const CartScreen = () => {
                                                 onChange={(e) => updateCartQty(item.product, item.size, Number(e.target.value))}
                                                 className={`bg-[#111] border border-[#333] rounded-[4px] px-4 py-2 text-white text-[13px] font-[600] uppercase tracking-wider focus:outline-none focus:border-white/50 ${isOutOfStock ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                             >
-                                                {Array.from({ length: 20 }).map((_, i) => {
+                                                {Array.from({ length: 50 }).map((_, i) => {
                                                     const val = (i + 1) * 0.5;
                                                     return (
                                                         <option key={val} value={val}>
