@@ -27,7 +27,6 @@ export const getCart = async (req, res) => {
                 const sizeMatch = productNode.sizes?.find(s => s.size === item.size);
                 if (sizeMatch) {
                     stockStatus = sizeMatch.stockStatus;
-                    item.price = sizeMatch.price;
                 }
             }
 

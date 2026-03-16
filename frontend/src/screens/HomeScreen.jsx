@@ -98,7 +98,7 @@ const HomeScreen = () => {
 
     const handleQtyChange = (id, val) => {
         if (val < 0.5) val = 0.5;
-        if (val > 10) val = 10;
+        if (val > 25) val = 25;
         setQuantities(prev => ({ ...prev, [id]: val }));
     };
 

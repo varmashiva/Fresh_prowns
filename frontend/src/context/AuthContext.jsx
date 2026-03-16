@@ -14,8 +14,6 @@ export const AuthProvider = ({ children }) => {
         const userInfoString = localStorage.getItem('userInfo');
 
         if (token && !userInfoString) {
-            // Edge case: Token exists but user info missing (e.g. from /auth-success)
-            // Fetch it
             api.get('/auth/me').then(({ data }) => {
                 setUser(data);
                 localStorage.setItem('userInfo', JSON.stringify(data));

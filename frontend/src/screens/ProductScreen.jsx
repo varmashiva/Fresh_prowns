@@ -242,7 +242,7 @@ const ProductScreen = () => {
                                                 onChange={(e) => setQty(Number(e.target.value))}
                                                 className="bg-[#111] border border-[#333] rounded-[4px] px-4 py-2 text-white text-[14px] font-[500] focus:outline-none focus:border-white/50 cursor-pointer"
                                             >
-                                                {Array.from({ length: 20 }).map((_, i) => {
+                                                {Array.from({ length: 50 }).map((_, i) => {
                                                     const val = (i + 1) * 0.5;
                                                     return (
                                                         <option key={val} value={val}>
