@@ -503,6 +503,14 @@ const HomeScreen = () => {
                                             </div>
 
 
+                                            {/* Delivery Area Info */}
+                                            <div className="w-full mt-6 px-2 text-center">
+                                                <p className="text-[10px] md:text-[11px] text-[#555] font-semibold tracking-widest uppercase leading-relaxed">
+                                                    Currently, we are serving selected communities in <span className="text-[#888]">LB Nagar</span>,
+                                                    <br className="hidden sm:block" /> while bulk orders are delivered across <span className="text-[#888]">Hyderabad</span>.
+                                                </p>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </motion.div>
@@ -697,11 +705,6 @@ const HomeScreen = () => {
                     <div className="flex flex-col items-center md:items-start text-center md:text-left gap-2 mb-4 md:mb-0">
                         <h2 className="text-[18px] md:text-xl font-bold text-white tracking-widest uppercase pointer-events-auto">Farm to Home</h2>
                         <p className="text-[12px] md:text-sm tracking-widest uppercase opacity-70">Delivering pristine seafood freshness</p>
-                        <div className="mt-3 py-1 px-3 border border-white/20 rounded bg-white/5 inline-block">
-                            <p className="text-[10px] md:text-[11px] text-white/90 tracking-[0.1em] uppercase font-bold">
-                                📍 Services currently available only to selected communities in LB Nagar
-                            </p>
-                        </div>
                     </div>
 
                     {/* FSSAI Logo */}
