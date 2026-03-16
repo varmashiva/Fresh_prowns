@@ -505,9 +505,9 @@ const HomeScreen = () => {
 
                                             {/* Delivery Area Info */}
                                             <div className="w-full mt-6 px-2 text-center">
-                                                <p className="text-[10px] md:text-[11px] text-[#555] font-semibold tracking-widest uppercase leading-relaxed">
-                                                    Currently, we are serving selected communities in <span className="text-[#888]">LB Nagar</span>,
-                                                    <br className="hidden sm:block" /> while bulk orders are delivered across <span className="text-[#888]">Hyderabad</span>.
+                                                <p className="text-[10px] md:text-[11px] text-[#888] font-bold tracking-widest uppercase leading-relaxed">
+                                                    📍 Currently, we are serving selected communities in <span className="text-white">LB Nagar</span>,
+                                                    <br className="hidden sm:block" /> while bulk orders are delivered across <span className="text-white">Hyderabad</span>.
                                                 </p>
                                             </div>
 
