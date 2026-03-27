@@ -92,6 +92,7 @@ const HomeScreen = () => {
     const [loading, setLoading] = useState(true);
     const [quantities, setQuantities] = useState({});
     const [selectedSizes, setSelectedSizes] = useState({});
+    const [isVideoLoaded, setIsVideoLoaded] = useState(false);
     const { socket } = useContext(SocketContext);
     const { addToCart } = useContext(CartContext);
     const navigate = useNavigate();
@@ -205,12 +206,33 @@ const HomeScreen = () => {
             {/* Full Viewport Hero Section */}
             <div className="relative h-screen min-h-screen w-full flex flex-col items-center justify-center overflow-hidden z-0 bg-black">
 
+                {/* Loading Animation Overlay */}
+                <AnimatePresence>
+                    {!isVideoLoaded && (
+                        <motion.div
+                            initial={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 1 }}
+                            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#050505]"
+                        >
+                            <div className="relative">
+                                {/* Outer spinning ring */}
+                                <div className="w-16 h-16 border-2 border-white/10 border-t-white/80 rounded-full animate-spin"></div>
+                                {/* Inner pulsing core */}
+                                <div className="absolute inset-0 m-auto w-6 h-6 bg-white/20 rounded-full animate-pulse blur-[2px]"></div>
+                            </div>
+                            <span className="mt-6 text-white/50 tracking-[0.3em] text-[10px] uppercase font-semibold animate-pulse">Loading Experience</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Parallax Background Video */}
                 <motion.video
                     autoPlay
                     loop
                     muted
                     playsInline
+                    onCanPlayThrough={() => setIsVideoLoaded(true)}
                     style={{ y: videoY, opacity: videoOpacity }}
                     className="absolute inset-0 w-full h-full object-cover z-0 origin-center"
                 >
