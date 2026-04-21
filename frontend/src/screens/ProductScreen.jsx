@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { SocketContext } from '../context/SocketContext';
 import { CartContext } from '../context/CartContext';
+import { FaShoppingCart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const ProductScreen = () => {
     const { id } = useParams();
@@ -12,10 +13,12 @@ const ProductScreen = () => {
     const [loading, setLoading] = useState(true);
     const [selectedSize, setSelectedSize] = useState('Medium');
     const [mainImageIndex, setMainImageIndex] = useState(0);
+    const [isPremium, setIsPremium] = useState(true);
+    const [relatedItems, setRelatedItems] = useState([]);
 
     const formatQty = (q) => {
         if (q === 0.5) return '500g';
-        if (q % 1 !== 0) return `${Math.floor(q)} 1/2 kg`;
+        if (q % 1 !== 0) return `${Math.floor(q)}.5 kg`;
         return `${q} kg`;
     };
 
@@ -23,32 +26,45 @@ const ProductScreen = () => {
     const { addToCart } = useContext(CartContext);
 
     useEffect(() => {
-        const fetchProduct = async () => {
+        const fetchData = async () => {
             try {
-                const { data } = await api.get(`/products/${id}`);
-                setProduct(data);
-
-                // Attempt to auto-select an available size
-                if (data.sizes && data.sizes.length > 0) {
-                    const availableSize = data.sizes.find(s => s.stockStatus === 'inStock');
-                    if (availableSize) {
-                        setSelectedSize(availableSize.size);
-                    } else {
-                        setSelectedSize(data.sizes[0].size); // fallback if all out of stock
+                setLoading(true);
+                // Step 1: Try to fetch as a Premium Product
+                try {
+                    const { data } = await api.get(`/products/${id}`);
+                    setProduct(data);
+                    setIsPremium(true);
+                    
+                    if (data.sizes && data.sizes.length > 0) {
+                        const availableSize = data.sizes.find(s => s.stockStatus === 'inStock');
+                        if (availableSize) {
+                            setSelectedSize(availableSize.size);
+                        } else {
+                            setSelectedSize(data.sizes[0].size);
+                        }
                     }
+                } catch (prodErr) {
+                    // Step 2: If not found, try to fetch as a Daily Special (Item)
+                    const { data } = await api.get(`/items/${id}`);
+                    setProduct(data);
+                    setIsPremium(false);
+                    setSelectedSize('Standard');
+                    
+                    // Fetch related items for comparison/upsell
+                    const itemsRes = await api.get('/items');
+                    setRelatedItems(itemsRes.data.filter(i => i._id !== id).slice(0, 4));
                 }
-
                 setLoading(false);
             } catch (error) {
-                console.error(error);
+                console.error('Failed to fetch product/item:', error);
                 setLoading(false);
             }
         };
-        fetchProduct();
+        fetchData();
     }, [id]);
 
     useEffect(() => {
-        if (socket) {
+        if (socket && isPremium) {
             socket.on('sizeStockUpdated', (data) => {
                 if (data.productId === id) {
                     setProduct((prev) => {
@@ -60,7 +76,6 @@ const ProductScreen = () => {
                             description: data.description
                         } : s);
 
-                        // If the currently selected size just went out of stock, try to find another one
                         if (selectedSize === data.size && data.stockStatus === 'outOfStock') {
                             const newAvailable = newSizes.find(s => s.stockStatus === 'inStock' && s.size !== data.size);
                             if (newAvailable) setSelectedSize(newAvailable.size);
@@ -80,30 +95,246 @@ const ProductScreen = () => {
                 socket.off('sizeStockUpdated');
             }
         };
-    }, [socket, id, selectedSize]);
+    }, [socket, id, selectedSize, isPremium]);
 
-    if (loading) return <div className="text-center mt-20">Loading product...</div>;
-    if (!product) return <div className="text-center mt-20">Product not found.</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-white/10 border-t-white rounded-full animate-spin"></div>
+        </div>
+    );
+    
+    if (!product) return (
+        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
+            <Link to="/" className="text-sm border-b border-white pb-1">Back to Home</Link>
+        </div>
+    );
 
-    const currentSizeData = product.sizes?.find(s => s.size === selectedSize) || { price: 0, stockStatus: 'outOfStock', description: 'Description unavailable.' };
-    const stockStatus = currentSizeData.stockStatus;
+    const currentSizeData = isPremium 
+        ? (product.sizes?.find(s => s.size === selectedSize) || { price: 0, stockStatus: 'outOfStock', description: 'Description unavailable.' })
+        : { price: product.marketPrice, stockStatus: 'inStock', description: product.description || '' };
+    
+    const stockStatus = isPremium ? currentSizeData.stockStatus : 'inStock';
     const isAvailable = stockStatus === 'inStock';
-    const isOverallInStock = product.overallStockStatus === 'inStock';
+    const isOverallInStock = isPremium ? (product.overallStockStatus === 'inStock') : true;
 
     const addToCartHandler = async () => {
         const success = await addToCart(product, selectedSize, currentSizeData.price, qty);
         if (success) {
             navigate('/cart');
-            window.location.reload();
         } else {
             navigate('/login');
         }
     };
 
     const activeImages = (currentSizeData.images && currentSizeData.images.length > 0) ? currentSizeData.images : (product.images || []);
-    // Ensure we don't go out of bounds if selection changes and new activeImages is shorter
     const safeMainImageIndex = mainImageIndex < activeImages.length ? mainImageIndex : 0;
 
+    // RENDER: Cinematic Layout for Daily Specials (Items)
+    if (!isPremium) {
+        return (
+            <div className="min-h-screen bg-black text-[#ededed] pt-32 pb-24 px-6 md:px-16 w-full relative z-10 overflow-hidden" style={{ fontFamily: 'Froople, sans-serif' }}>
+                {/* Cinematic Noise Overlay */}
+                <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/>%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/>%3C/svg%3E')" }}></div>
+
+                <div className="max-w-7xl mx-auto relative z-10 flex flex-col items-start w-full">
+                    
+                    {/* Back Link */}
+                    <Link to="/" className="inline-flex items-center gap-2 text-[10px] md:text-[12px] font-[600] tracking-widest text-[#777] uppercase font-mono mb-8 md:mb-12 hover:text-white transition-colors duration-300">
+                        <span className="text-[16px] leading-none -mt-[2px]">&larr;</span> BACK TO COLLECTION
+                    </Link>
+
+                    <div className="w-full flex pb-6 md:pb-12 relative">
+                        <div className="w-full md:w-1/4 hidden md:block">
+                            <span className="text-[11px] md:text-[13px] font-[600] tracking-widest text-white/50 block mt-4 uppercase font-mono">
+                                (Daily Special)
+                            </span>
+                        </div>
+                        <div className="w-full md:w-3/4 text-left">
+                            <h1 className="text-[45px] md:text-[70px] lg:text-[100px] font-black leading-[0.85] tracking-tighter text-[#eaeaea] uppercase" style={{ fontWeight: 900 }}>
+                                {product.name}
+                            </h1>
+                        </div>
+                    </div>
+
+                    <div className="w-full h-[1px] bg-[#333] mb-12 relative flex-shrink-0">
+                        <div className="absolute left-0 -top-[7px] text-[#666] text-[10px] font-mono">+</div>
+                        <div className="absolute right-0 -top-[7px] text-[#666] text-[10px] font-mono">+</div>
+                    </div>
+
+                    <div className="w-full flex flex-col lg:flex-row gap-12 lg:gap-20">
+                        {/* Left: Image Container */}
+                        <div className="w-full lg:w-1/2 flex flex-col gap-4">
+                            <div className="w-full aspect-square bg-[#0c0c0c] rounded-[16px] overflow-hidden relative group border border-[#1a1a1a]">
+                                <img
+                                    src={activeImages[safeMainImageIndex]?.url || product.image}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+                                />
+                                {activeImages.length > 1 && (
+                                    <>
+                                        <button 
+                                            onClick={() => setMainImageIndex(prev => (prev === 0 ? activeImages.length - 1 : prev - 1))}
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-white/10"
+                                        >
+                                            <FaChevronLeft size={14} />
+                                        </button>
+                                        <button 
+                                            onClick={() => setMainImageIndex(prev => (prev === activeImages.length - 1 ? 0 : prev + 1))}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-white/10"
+                                        >
+                                            <FaChevronRight size={14} />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                            {activeImages.length > 1 && (
+                                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                    {activeImages.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setMainImageIndex(idx)}
+                                            className={`relative flex-shrink-0 w-20 h-20 rounded-[8px] overflow-hidden transition-all duration-300 border ${safeMainImageIndex === idx ? 'border-white opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                        >
+                                            <img src={img.url} className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right: Info Section */}
+                        <div className="w-full lg:w-1/2 flex flex-col">
+                            <div className="bg-[#0c0c0c] border border-[#1a1a1a] rounded-[16px] p-6 md:p-8 flex flex-col relative overflow-hidden">
+                                <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.05]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/>%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/>%3C/svg%3E')" }}></div>
+
+                                <div className="relative z-10">
+                                    <div className="pb-10 border-b border-[#222]">
+                                        <div className="flex items-center justify-between mb-5">
+                                            <span className="text-[#777] font-[700] text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-mono">Weight Selection</span>
+                                            <div className="h-[1px] flex-grow mx-4 bg-[#222]"></div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            {['500g', '1kg'].map(w => (
+                                                <button 
+                                                    key={w}
+                                                    onClick={() => setQty(w === '500g' ? 0.5 : 1)}
+                                                    className={`px-8 py-3 rounded-[6px] text-[12px] md:text-[13px] font-[800] tracking-[0.05em] transition-all duration-300 border ${
+                                                        (w === '500g' ? qty === 0.5 : qty === 1)
+                                                        ? 'bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.1)]'
+                                                        : 'bg-[#121212] border-[#222] text-white/50 hover:border-white/30 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {w.toUpperCase()}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="py-8 border-b border-[#222] flex justify-between items-end">
+                                        <div className="flex flex-col">
+                                            <span className="text-[#777] font-[700] text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-mono mb-3">Price Value</span>
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-white font-[900] text-[40px] md:text-[52px] tracking-tighter leading-none">₹{Math.round(product.marketPrice * qty)}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[#555] text-[14px] md:text-[16px] line-through font-mono leading-none mb-1">₹{Math.round(product.marketPrice * qty * 1.3)}</span>
+                                                    <span className="text-green-500 text-[10px] font-bold tracking-widest uppercase">SAVE 30%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[#777] font-[700] text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-mono mb-3">Status</span>
+                                            <span className="text-[10px] md:text-[11px] font-[800] uppercase tracking-[0.15em] px-4 py-2 bg-green-500/10 text-green-500 border border-green-500/20 rounded-[4px] backdrop-blur-sm">DAILY CATCH</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="py-8">
+                                        <button 
+                                            onClick={addToCartHandler}
+                                            className="w-full py-[20px] md:py-[24px] rounded-[10px] font-[900] text-[13px] md:text-[14px] uppercase tracking-[0.2em] bg-[#f0f0f0] text-black hover:bg-white hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-4 group"
+                                        >
+                                            <FaShoppingCart className="group-hover:translate-x-1 transition-transform" />
+                                            ADD {qty === 0.5 ? '500G' : '1KG'} TO CART
+                                        </button>
+                                    </div>
+
+                                    {/* Product Specifications Section */}
+                                    <div className="mt-8 space-y-0 border-t border-[#222]">
+                                        {[
+                                            { label: 'Product Description', value: product.description },
+                                            { label: 'Usage & Preparation', value: product.usageInstructions },
+                                            { label: 'Shelf Life & Storage', value: product.shelfLifeStorage }
+                                        ].map((spec, i) => spec.value && (
+                                            <div key={i} className="group border-b border-[#111] last:border-b-0 py-8 px-2 transition-all duration-300 hover:bg-white/[0.02]">
+                                                <div className="flex items-start gap-6 border-l-2 border-[#333] pl-6 group-hover:border-white transition-colors duration-500">
+                                                    <div className="flex flex-col gap-2">
+                                                        <h3 className="text-[10px] md:text-[11px] font-[700] tracking-[0.25em] text-[#666] group-hover:text-[#aaa] uppercase font-mono transition-colors">{spec.label}</h3>
+                                                        <p className="text-[#999] group-hover:text-[#eee] text-[14px] md:text-[16px] leading-relaxed font-[450] transition-colors">{spec.value}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Bulk Order Contact */}
+                                    <div className="w-full mt-12 py-8 text-center text-[#777] text-[10px] md:text-[11px] font-[700] tracking-[0.2em] uppercase border-t border-[#111] bg-gradient-to-b from-transparent to-white/[0.01]">
+                                        <p className="leading-relaxed opacity-60 hover:opacity-100 transition-opacity duration-500">
+                                            For bulk orders please contact
+                                            <br className="sm:hidden" />
+                                            <a href="tel:+918884143699" className="text-white hover:text-green-500 transition-colors ml-2 font-black border-b border-white/20 pb-0.5">+91 8884143699</a>
+                                        </p>
+                                    </div>
+
+                                    {/* Delivery Area Info */}
+                                    <div className="w-full mt-2 text-center pb-8 opacity-50 hover:opacity-100 transition-opacity duration-700">
+                                        <p className="text-[9px] md:text-[10px] text-[#666] font-[800] tracking-[0.25em] uppercase leading-[2] max-w-[500px] mx-auto px-4">
+                                            📍 Currently serving selected communities in <span className="text-white">LB Nagar</span>,
+                                            <span className="inline-block mx-2 opacity-30">|</span> 
+                                            Bulk orders delivered across <span className="text-white">Hyderabad</span>.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Related Products Section */}
+                    {relatedItems.length > 0 && (
+                        <div className="w-full mt-32">
+                            <div className="flex items-center gap-4 mb-12">
+                                <h2 className="text-[20px] md:text-[24px] font-black uppercase tracking-tighter text-white">Suggested Fresh Catch</h2>
+                                <div className="flex-grow h-[1px] bg-[#222] relative">
+                                    <div className="absolute right-0 -top-[7px] text-[#666] text-[10px] font-mono">+</div>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                {relatedItems.map(item => (
+                                    <Link 
+                                        to={`/product/${item._id}`} 
+                                        key={item._id} 
+                                        className="group flex flex-col bg-[#0c0c0c] border border-[#1a1a1a] rounded-[18px] p-4 hover:border-[#333] transition-all"
+                                    >
+                                        <div className="aspect-square rounded-[12px] overflow-hidden bg-black mb-4 relative">
+                                            <img src={item.images?.[0]?.url || item.image} alt={item.name} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" />
+                                        </div>
+                                        <h3 className="text-[15px] font-[800] text-white mb-3 uppercase tracking-tight truncate">{item.name}</h3>
+                                        <div className="flex justify-between items-center mt-auto">
+                                            <span className="text-[18px] font-black text-white font-mono">₹{item.marketPrice}</span>
+                                            <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
+                                                +
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // RENDER: Premium Cinematic Layout for Specialty Products
     return (
         <div className="min-h-screen bg-black text-[#ededed] pt-32 pb-24 px-6 md:px-16 w-full relative z-10 overflow-hidden" style={{ fontFamily: 'Froople, sans-serif' }}>
             {/* Cinematic Noise Overlay */}

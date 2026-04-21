@@ -91,9 +91,11 @@ const CartScreen = () => {
                                                 <Link to={`/product/${item.product}`} className="text-[20px] md:text-[24px] font-[800] tracking-tighter text-[#eaeaea] hover:text-white transition-colors leading-none uppercase">
                                                     {item.name}
                                                 </Link>
-                                                <span className="text-[11px] font-[600] tracking-widest text-[#777] uppercase font-mono mt-2 mb-3 block">
-                                                    Size: {item.size}
-                                                </span>
+                                                {item.size !== 'Standard' && (
+                                                    <span className="text-[11px] font-[600] tracking-widest text-[#777] uppercase font-mono mt-2 mb-3 block">
+                                                        Size: {item.size}
+                                                    </span>
+                                                )}
                                                 <div className="text-[20px] md:text-[24px] font-[700] tracking-tight text-white/90 font-mono">
                                                     ₹{item.price} <span className="text-[12px] text-[#555] tracking-widest uppercase ml-1">/kg</span>
                                                 </div>

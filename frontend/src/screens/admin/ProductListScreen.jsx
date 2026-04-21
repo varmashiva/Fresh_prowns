@@ -7,6 +7,7 @@ const ProductListScreen = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
+    const [items, setItems] = useState([]);
 
     // States for Create Product Form
     const [showAddForm, setShowAddForm] = useState(false);
@@ -18,6 +19,20 @@ const ProductListScreen = () => {
         { size: 'Medium', price: 0, stockStatus: 'inStock', description: '', images: [] },
         { size: 'Large', price: 0, stockStatus: 'inStock', description: '', images: [] }
     ];
+
+    const [showAddItemForm, setShowAddItemForm] = useState(false);
+    const [uploadingItemImage, setUploadingItemImage] = useState(false);
+
+    const [newItem, setNewItem] = useState({
+        name: '',
+        marketPrice: 0,
+        margin: 0,
+        description: '',
+        usageInstructions: '',
+        shelfLifeStorage: '',
+        images: [],
+        sizes: JSON.parse(JSON.stringify(defaultSizes))
+    });
 
     const [newProduct, setNewProduct] = useState({
         name: '',
@@ -35,8 +50,12 @@ const ProductListScreen = () => {
 
         const fetchProducts = async () => {
             try {
-                const { data } = await api.get('/products');
-                setProducts(data);
+                const [productRes, itemRes] = await Promise.all([
+                    api.get('/products'),
+                    api.get('/items')
+                ]);
+                setProducts(productRes.data);
+                setItems(itemRes.data);
             } catch (error) {
                 console.error(error);
             }
@@ -118,6 +137,80 @@ const ProductListScreen = () => {
         setNewProduct({ ...newProduct, sizes: updatedSizes });
     };
 
+    const uploadItemFilesHandler = async (e) => {
+        const files = e.target.files;
+        if (files.length === 0) return;
+        const formData = new FormData();
+        Array.from(files).forEach(file => formData.append('images', file));
+        setUploadingItemImage(true);
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.post('/upload/product-images', formData, config);
+            setNewItem(prev => ({ ...prev, images: [...prev.images, ...data.images] }));
+            setUploadingItemImage(false);
+        } catch (error) {
+            console.error(error);
+            setUploadingItemImage(false);
+            alert('Images upload failed');
+        }
+    };
+
+    const removeNewItemImageHandler = (publicId) => {
+        setNewItem(prev => ({ ...prev, images: prev.images.filter(img => img.publicId !== publicId) }));
+    };
+
+    const handleNewItemSizeChange = (index, field, value) => {
+        const updatedSizes = [...newItem.sizes];
+        updatedSizes[index][field] = value;
+        setNewItem({ ...newItem, sizes: updatedSizes });
+    };
+
+    const uploadNewItemSizeFilesHandler = async (index, e) => {
+        const files = e.target.files;
+        if (files.length === 0) return;
+        const formData = new FormData();
+        Array.from(files).forEach(file => formData.append('images', file));
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.post('/upload/product-images', formData, config);
+            const updatedSizes = [...newItem.sizes];
+            updatedSizes[index].images = [...(updatedSizes[index].images || []), ...data.images];
+            setNewItem({ ...newItem, sizes: updatedSizes });
+        } catch (error) {
+            console.error(error);
+            alert('Variant Images upload failed');
+        }
+    };
+
+    const removeNewItemSizeImageHandler = (index, publicId) => {
+        const updatedSizes = [...newItem.sizes];
+        updatedSizes[index].images = updatedSizes[index].images.filter(img => img.publicId !== publicId);
+        setNewItem({ ...newItem, sizes: updatedSizes });
+    };
+
+    const submitCreateItemHandler = async (e) => {
+        e.preventDefault();
+        try {
+            const { data } = await api.post('/items', newItem);
+            setItems([...items, data]);
+            alert('Item initialized and published alive.');
+            setShowAddItemForm(false);
+            setNewItem({
+                name: '',
+                marketPrice: 0,
+                margin: 0,
+                description: '',
+                usageInstructions: '',
+                shelfLifeStorage: '',
+                images: [],
+                sizes: JSON.parse(JSON.stringify(defaultSizes))
+            });
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || 'Failed to initialize item');
+        }
+    };
+
     const submitCreateProductHandler = async (e) => {
         e.preventDefault();
         try {
@@ -133,6 +226,26 @@ const ProductListScreen = () => {
             });
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to create product');
+        }
+    };
+
+    const updateItemHandler = async (id, updatedFields) => {
+        try {
+            const { data } = await api.put(`/items/${id}`, updatedFields);
+            setItems(items.map(i => i._id === id ? data : i));
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to update item');
+        }
+    };
+
+    const deleteItemHandler = async (id) => {
+        if (window.confirm('Are you sure you want to delete this item?')) {
+            try {
+                await api.delete(`/items/${id}`);
+                setItems(items.filter(i => i._id !== id));
+            } catch (err) {
+                alert(err.response?.data?.message || 'Failed to delete item');
+            }
         }
     };
 
@@ -248,9 +361,21 @@ const ProductListScreen = () => {
                             INVENTORY<br />SYSTEM
                         </h1>
                     </div>
-                    <div className="w-full md:w-1/2 flex justify-end mt-6 md:mt-0">
+                    <div className="w-full md:w-1/2 flex justify-end gap-4 mt-6 md:mt-0">
                         <button
-                            onClick={() => setShowAddForm(!showAddForm)}
+                            onClick={(e) => {
+                                setShowAddItemForm(!showAddItemForm);
+                                if (!showAddItemForm) setShowAddForm(false);
+                            }}
+                            className={`py-3 px-6 rounded-[4px] font-[800] text-[11px] md:text-[12px] uppercase tracking-[0.1em] transition-all duration-300 shadow-xl border ${showAddItemForm ? 'bg-[#111] text-[#eaeaea] border-[#333] hover:text-white hover:border-white' : 'bg-[#eaeaea] text-[#111] border-[#eaeaea] hover:bg-white'}`}
+                        >
+                            {showAddItemForm ? 'CANCEL ITEM CREATION' : '+ ADD NEW ITEM'}
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                setShowAddForm(!showAddForm);
+                                if (!showAddForm) setShowAddItemForm(false);
+                            }}
                             className={`py-3 px-6 rounded-[4px] font-[800] text-[11px] md:text-[12px] uppercase tracking-[0.1em] transition-all duration-300 shadow-xl border ${showAddForm ? 'bg-[#111] text-[#eaeaea] border-[#333] hover:text-white hover:border-white' : 'bg-[#eaeaea] text-[#111] border-[#eaeaea] hover:bg-white'}`}
                         >
                             {showAddForm ? 'CANCEL CREATION' : '+ ADD NEW PRODUCT'}
@@ -265,7 +390,156 @@ const ProductListScreen = () => {
             </div>
 
             <div className="max-w-7xl mx-auto relative z-10 w-full mb-16">
-                {showAddForm && (
+                {showAddItemForm && (
+                    <div className="w-full bg-[#0c0c0c] border border-[#1a1a1a] rounded-[16px] p-6 md:p-10 relative overflow-hidden flex flex-col mb-16 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.05]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/>%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/>%3C/svg%3E')" }}></div>
+
+                        <h2 className="text-[20px] md:text-[24px] font-[800] tracking-tighter uppercase mb-8 border-b border-[#222] pb-6 relative z-10 flex items-center gap-4">
+                            Item Genesis
+                            <span className="h-[1px] flex-1 bg-[#222]"></span>
+                        </h2>
+
+                        <form onSubmit={submitCreateItemHandler} className="relative z-10 flex flex-col gap-8 w-full">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+
+                                {/* Left Side: Basic Info & Pricing */}
+                                <div className="flex flex-col gap-6">
+                                    <h3 className="text-[14px] font-[800] tracking-widest uppercase text-[#888] font-mono mb-2">Identifier & Globals</h3>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Item Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={newItem.name}
+                                            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                                            className="w-full px-4 py-3 md:py-4 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-[600] uppercase tracking-wide focus:outline-none focus:border-white/50 transition duration-300"
+                                            placeholder="Enter item designation"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Market Price (₹)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                required
+                                                value={newItem.marketPrice}
+                                                onChange={(e) => setNewItem({ ...newItem, marketPrice: Number(e.target.value) })}
+                                                className="w-full px-4 py-3 md:py-4 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Margin (%)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                required
+                                                value={newItem.margin}
+                                                onChange={(e) => setNewItem({ ...newItem, margin: Number(e.target.value) })}
+                                                className="w-full px-4 py-3 md:py-4 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 mt-4">
+                                        <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Description</label>
+                                        <textarea
+                                            rows="3"
+                                            value={newItem.description}
+                                            onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                                            className="w-full px-4 py-3 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300 resize-none"
+                                            placeholder="Enter item description..."
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Usage Instructions</label>
+                                        <textarea
+                                            rows="3"
+                                            value={newItem.usageInstructions}
+                                            onChange={(e) => setNewItem({ ...newItem, usageInstructions: e.target.value })}
+                                            className="w-full px-4 py-3 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300 resize-none"
+                                            placeholder="Enter usage instructions..."
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Shelf Life & Storage</label>
+                                        <textarea
+                                            rows="3"
+                                            value={newItem.shelfLifeStorage}
+                                            onChange={(e) => setNewItem({ ...newItem, shelfLifeStorage: e.target.value })}
+                                            className="w-full px-4 py-3 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300 resize-none"
+                                            placeholder="Enter shelf life & storage instructions..."
+                                        />
+                                    </div>
+
+                                </div>
+
+                                {/* Right Side: Images */}
+                                <div className="flex flex-col gap-6">
+                                    <h3 className="text-[14px] font-[800] tracking-widest uppercase text-[#888] font-mono mb-2">Media Assets</h3>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Upload Images (Max 5)</label>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={uploadItemFilesHandler}
+                                                disabled={uploadingItemImage || newItem.images.length >= 5}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
+                                            />
+                                            <div className={`w-full px-4 py-8 md:py-12 border border-dashed rounded-[4px] flex flex-col items-center justify-center gap-3 transition-all duration-300 ${uploadingItemImage ? 'border-[#333] bg-[#111] opacity-50' : newItem.images.length >= 5 ? 'border-[#333] bg-[#0c0c0c] opacity-50 cursor-not-allowed' : 'border-[#444] bg-[#111] hover:border-white/50 hover:bg-[#1a1a1a]'}`}>
+                                                {uploadingItemImage ? (
+                                                    <div className="w-6 h-6 border-2 border-t-[#eaeaea] border-[#333] rounded-full animate-spin flex-shrink-0"></div>
+                                                ) : (
+                                                    <span className="text-[24px] font-mono text-[#555] leading-none">+</span>
+                                                )}
+                                                <span className="text-[11px] font-[600] tracking-widest text-[#777] uppercase font-mono text-center">
+                                                    {uploadingItemImage ? 'Uploading Assets...' : 'Drop files or click to add'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-4">
+                                        {newItem.images.map((img) => (
+                                            <div key={img.publicId} className="relative group rounded-[8px] overflow-hidden border border-[#333] bg-[#111] aspect-square">
+                                                <img src={img.url} alt="Uploaded" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeNewItemImageHandler(img.publicId)}
+                                                        className="bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/50 hover:text-white p-2 md:p-3 rounded-full transition-colors"
+                                                    >
+                                                        <span className="block w-3 h-3 md:w-4 md:h-4 relative"><span className="absolute top-1/2 left-0 w-full h-[2px] bg-current -translate-y-1/2 rotate-45"></span><span className="absolute top-1/2 left-0 w-full h-[2px] bg-current -translate-y-1/2 -rotate-45"></span></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {newItem.images.length > 0 && (
+                                        <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">{newItem.images.length}/5 Attached Assets</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-8 pt-8 border-t border-[#222] flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={uploadingItemImage || newItem.name.trim() === ''}
+                                    className="w-full md:w-auto py-5 px-12 rounded-[4px] font-[800] text-[12px] md:text-[14px] uppercase tracking-[0.1em] transition-all duration-300 bg-[#eaeaea] text-[#111] border border-[#eaeaea] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                                >
+                                    INITIALIZE ITEM
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+{showAddForm && (
                     <div className="w-full bg-[#0c0c0c] border border-[#1a1a1a] rounded-[16px] p-6 md:p-10 relative overflow-hidden flex flex-col mb-16 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                         <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.05]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/>%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/>%3C/svg%3E')" }}></div>
 
@@ -552,6 +826,100 @@ const ProductListScreen = () => {
                             </div>
                         ))}
                         {products.length === 0 && <div className="py-20 text-center text-[#777] text-[12px] uppercase tracking-widest font-mono">No Inventory Records Available.</div>}
+                    </div>
+                </div>
+
+                <div className="w-full bg-[#0c0c0c] border border-[#1a1a1a] rounded-[16px] p-6 md:p-10 relative overflow-hidden flex flex-col mt-8">
+                    <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.05]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/>%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\"/>%3C/svg%3E')" }}></div>
+
+                    <h2 className="text-[20px] md:text-[24px] font-[800] tracking-tighter uppercase mb-8 border-b border-[#222] pb-6 relative z-10 flex items-center gap-4">
+                        Item Archive
+                        <span className="h-[1px] flex-1 bg-[#222]"></span>
+                    </h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+                        {items.map((item) => (
+                            <div key={item._id} className="bg-[#111] border border-[#1a1a1a] rounded-[16px] flex flex-col hover:border-[#333] transition-colors relative group overflow-hidden shadow-lg">
+                                {/* Image Box */}
+                                <div className="w-full aspect-[4/3] bg-[#0c0c0c] border-b border-[#222] relative group/szimg">
+                                    {item.images && item.images.length > 0 ? (
+                                        <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-[#333] font-mono text-[40px]">?</div>
+                                    )}
+                                    <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded-[4px] text-[10px] font-mono tracking-widest text-[#888] shadow-md uppercase">
+                                        ID: {item._id.substring(18)}
+                                    </div>
+                                </div>
+
+                                {/* Editable Fields */}
+                                <div className="flex flex-col p-5 gap-4">
+                                    <input 
+                                        type="text" 
+                                        defaultValue={item.name} 
+                                        onBlur={(e) => {
+                                            if(e.target.value !== item.name) updateItemHandler(item._id, { name: e.target.value });
+                                        }}
+                                        className="bg-transparent font-[800] uppercase tracking-wide text-[#eaeaea] text-[18px] focus:outline-none border-b border-transparent focus:border-[#444] transition-colors w-full line-clamp-1"
+                                        placeholder="Item Name"
+                                    />
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[9px] uppercase tracking-widest font-mono text-[#555]">M. Price</span>
+                                            <div className="flex items-center bg-[#0c0c0c] border border-[#222] rounded-[6px] px-3">
+                                                <span className="text-[#666] font-mono text-[14px] pr-1">₹</span>
+                                                <input 
+                                                    type="number"
+                                                    defaultValue={item.marketPrice}
+                                                    onBlur={(e) => {
+                                                        if(Number(e.target.value) !== item.marketPrice) updateItemHandler(item._id, { marketPrice: Number(e.target.value) });
+                                                    }}
+                                                    className="bg-transparent text-green-400 font-mono font-[800] text-[15px] py-2 w-full focus:outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[9px] uppercase tracking-widest font-mono text-[#555]">Margin</span>
+                                            <div className="flex items-center bg-[#0c0c0c] border border-[#222] rounded-[6px] px-3">
+                                                <span className="text-[#666] font-mono text-[14px] pr-1">%</span>
+                                                <input 
+                                                    type="number"
+                                                    defaultValue={item.margin}
+                                                    onBlur={(e) => {
+                                                        if(Number(e.target.value) !== item.margin) updateItemHandler(item._id, { margin: Number(e.target.value) });
+                                                    }}
+                                                    className="bg-transparent text-[#eaeaea] font-mono font-[800] text-[15px] py-2 w-full focus:outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[9px] uppercase tracking-widest font-mono text-[#555]">Description</span>
+                                        <textarea 
+                                            defaultValue={item.description}
+                                            onBlur={(e) => {
+                                                if(e.target.value !== item.description) updateItemHandler(item._id, { description: e.target.value });
+                                            }}
+                                            className="bg-[#0c0c0c] border border-[#222] rounded-[6px] p-3 text-[#bbb] font-mono text-[11px] leading-[1.6] resize-none h-20 focus:outline-none focus:border-[#444] w-full"
+                                            placeholder="Item description..."
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between items-center mt-2 pt-4 border-t border-[#1a1a1a]">
+                                        <span className="text-[10px] text-[#444] uppercase tracking-widest font-[800]">Modify</span>
+                                        <button
+                                            onClick={() => deleteItemHandler(item._id)}
+                                            className="text-[10px] uppercase font-[800] tracking-widest text-[#ef4444] hover:text-white bg-red-500/10 hover:bg-red-500/80 border border-red-500/20 hover:border-red-500 rounded-[4px] px-5 py-2 transition-all"
+                                        >
+                                            Redact
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {items.length === 0 && <div className="py-20 text-center text-[#777] text-[12px] uppercase tracking-widest font-mono">No Item Records Available.</div>}
                     </div>
                 </div>
             </div>

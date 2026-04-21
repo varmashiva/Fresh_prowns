@@ -88,10 +88,13 @@ const ParallaxImageBlock = ({ imageSrc, id, title, description }) => {
 
 const HomeScreen = () => {
     const [products, setProducts] = useState([]);
+    const [items, setItems] = useState([]);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
     const [loading, setLoading] = useState(true);
     const [quantities, setQuantities] = useState({});
     const [selectedSizes, setSelectedSizes] = useState({});
+    const [itemSizes, setItemSizes] = useState({}); // '500g' | '1kg' per item
+    const [cartToast, setCartToast] = useState(null); // { name, size }
     const [isVideoLoaded, setIsVideoLoaded] = useState(false);
     const [loadedImages, setLoadedImages] = useState({});
     const { socket } = useContext(SocketContext);
@@ -122,8 +125,12 @@ const HomeScreen = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const { data } = await api.get('/products');
-                setProducts(data);
+                const [productsRes, itemsRes] = await Promise.all([
+                    api.get('/products'),
+                    api.get('/items')
+                ]);
+                setProducts(productsRes.data);
+                setItems(itemsRes.data);
                 setLoading(false);
             } catch (error) {
                 console.error(error);
@@ -154,13 +161,31 @@ const HomeScreen = () => {
                     })
                 );
             });
+            socket.on('itemCreated', (newItem) => {
+                setItems(prevItems => [...prevItems, newItem]);
+            });
         }
         return () => {
             if (socket) {
                 socket.off('sizeStockUpdated');
+                socket.off('itemCreated');
             }
         };
     }, [socket]);
+
+    const handleAddItemToCart = async (item) => {
+        const selectedLabel = itemSizes[item._id] || '500g';
+        const qty = selectedLabel === '500g' ? 0.5 : 1;
+        const size = 'Standard'; // Use constant size to allow merging in cart
+        const price = item.marketPrice;
+        const success = await addToCart(item, size, price, qty);
+        if (!success) {
+            navigate('/login');
+        } else {
+            setCartToast({ name: item.name, size });
+            setTimeout(() => setCartToast(null), 3000);
+        }
+    };
 
     // Staggered Text Animation setup
     const titleText = "FARM\nTO HOME";
@@ -204,6 +229,37 @@ const HomeScreen = () => {
 
     return (
         <div>
+            {/* Cart Success Toast */}
+            <AnimatePresence>
+                {cartToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-4 bg-[#0c0c0c] border border-[#2a2a2a] rounded-[14px] px-5 py-4 shadow-[0_8px_40px_rgba(0,0,0,0.7)] min-w-[280px] max-w-[90vw]"
+                    >
+                        {/* Green check icon */}
+                        <div className="w-9 h-9 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[13px] font-[800] text-white uppercase tracking-wide line-clamp-1">{cartToast.name}</span>
+                            <span className="text-[11px] text-[#888] font-[500] mt-0.5">{cartToast.size} · Added to cart successfully</span>
+                        </div>
+                        {/* Progress bar */}
+                        <motion.div
+                            initial={{ scaleX: 1 }}
+                            animate={{ scaleX: 0 }}
+                            transition={{ duration: 3, ease: 'linear' }}
+                            style={{ originX: 0 }}
+                            className="absolute bottom-0 left-0 right-0 h-[2px] bg-green-500 rounded-b-[14px]"
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Full Viewport Hero Section */}
             <div className="relative h-screen min-h-screen w-full flex flex-col items-center justify-center overflow-hidden z-0 bg-black">
 
@@ -314,7 +370,7 @@ const HomeScreen = () => {
                 </div>
             </div>
 
-            <section className="bg-black pt-36 pb-24 md:pt-56 md:pb-32 px-6 md:px-12 w-full relative">
+            <section className="bg-black pt-36 pb-24 md:pt-56 md:pb-32 px-4 md:px-12 w-full relative">
                 {/* Subtle radial vignette background */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#111111] via-black to-black opacity-90 pointer-events-none"></div>
 
@@ -361,6 +417,92 @@ const HomeScreen = () => {
                                     Our prawns are responsibly farmed in traditional freshwater ponds (cheruvulu) by experienced aqua farmers across coastal Andhra Pradesh. Harvested fresh and packed the same day to preserve natural taste and quality.
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* New Items Catalog */}
+                    <div className="flex flex-col gap-8 w-full max-w-[1400px] mx-auto mb-20 md:mb-32 mt-10 md:mt-16 relative z-20">
+                        <div className="w-full flex items-center gap-4 mb-6 md:mb-10">
+                            <h2 className="text-[20px] md:text-[30px] font-black tracking-tighter text-[#eaeaea] uppercase">
+                                Daily Specials 
+                            </h2>
+                            <span className="h-[1px] flex-1 bg-[#333]"></span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 md:gap-6 lg:gap-8">
+                            {items.map((item) => {
+                                const selectedWeight = itemSizes[item._id] || '500g';
+                                const weightMultiplier = selectedWeight === '500g' ? 0.5 : 1;
+                                const salePrice = Math.round(item.marketPrice * weightMultiplier);
+                                const oldPrice = Math.round(salePrice * 1.3);
+
+                                return (
+                                    <div key={item._id} className="bg-[#0c0c0c] border border-[#222] rounded-[18px] md:rounded-[24px] p-3 md:p-4 flex flex-col hover:border-[#444] transition-colors duration-500 shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden group/item">
+                                        
+                                        {/* Image container */}
+                                        <div className="w-full aspect-[4/5] relative rounded-[16px] overflow-hidden mb-5 border border-[#1a1a1a]">
+                                            <Link to={`/product/${item._id}`} className="block w-full h-full relative z-10">
+                                                <img src={item.images?.[0]?.url} alt={item.name} className="w-full h-full object-cover object-center grayscale-[15%] group-hover/item:grayscale-0 transition-all duration-700 group-hover/item:scale-[1.03]" />
+                                            </Link>
+                                            
+                                            {/* Top Left Tag */}
+                                            <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20 bg-[#eaeaea] text-black text-[9px] md:text-[11px] font-[900] px-2.5 md:px-3 py-1 md:py-1.5 rounded-[4px] md:rounded-[6px] uppercase tracking-widest shadow-xl pointer-events-none">
+                                                FRESH CATCH
+                                            </div>
+                                            
+                                            {/* Carousel Arrows */}
+                                            <button className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white opacity-0 group-hover/item:opacity-100 transition-opacity z-20 hover:bg-black/60 border border-white/10">
+                                                ‹
+                                            </button>
+                                            <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white opacity-0 group-hover/item:opacity-100 transition-opacity z-20 hover:bg-black/60 border border-white/10">
+                                                ›
+                                            </button>
+                                            
+                                            {/* Floating Cart Button */}
+                                            <button
+                                                onClick={() => handleAddItemToCart(item)}
+                                                className="absolute bottom-2 right-2 md:bottom-4 md:right-4 z-20 w-9 md:w-12 h-9 md:h-12 bg-[#eaeaea] text-black rounded-full flex items-center justify-center hover:scale-110 hover:bg-white hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all shadow-xl"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 md:w-5 md:h-5">
+                                                    <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        {/* Info section */}
+                                        <div className="flex flex-col px-2 flex-grow">
+                                            <Link to={`/product/${item._id}`}>
+                                                <h3 className="text-[19px] md:text-[18px] font-[800] text-white tracking-wide leading-[1.3] capitalize mb-3 md:mb-3 line-clamp-2 hover:text-gray-300 transition-colors">
+                                                    {item.name}
+                                                </h3>
+                                            </Link>
+
+                                            {/* Size selector */}
+                                            <div className="flex items-center gap-2 md:gap-2 mb-4 md:mb-4">
+                                                {['500g', '1kg'].map(w => (
+                                                    <button
+                                                        key={w}
+                                                        onClick={() => setItemSizes(prev => ({ ...prev, [item._id]: w }))}
+                                                        className={`px-3 md:px-3 py-1.5 md:py-1.5 rounded-[6px] md:rounded-[6px] text-[11px] md:text-[11px] font-[800] uppercase tracking-widest border transition-all ${
+                                                            selectedWeight === w
+                                                                ? 'bg-[#eaeaea] text-black border-[#eaeaea]'
+                                                                : 'bg-transparent text-[#666] border-[#333] hover:border-[#555] hover:text-[#aaa]'
+                                                        }`}
+                                                    >
+                                                        {w}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Bottom Price elements */}
+                                            <div className="flex items-center gap-3 md:gap-3 mt-auto pt-2 border-t border-[#1a1a1a]">
+                                                <span className="text-white font-[800] text-[24px] md:text-[24px] tracking-tight">₹{salePrice}</span>
+                                                <span className="text-[#555] font-[600] text-[14px] md:text-[15px] line-through">₹{oldPrice}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
 
@@ -515,7 +657,6 @@ const HomeScreen = () => {
                                                             const success = await addToCart(product, currentSize, finalPrice, getQty(product._id));
                                                             if (success) {
                                                                 navigate('/cart');
-                                                                window.location.reload();
                                                             } else {
                                                                 navigate('/login');
                                                             }

@@ -15,24 +15,23 @@ export const getCart = async (req, res) => {
             return res.json(cart);
         }
 
-        // Hydrate strict live stock metrics derived from matching Products
+        // Hydrate live stock. Items (from Item collection, not Product) won't populate — treat as inStock
         const cartData = cart.toObject();
         cartData.items = cartData.items.map(item => {
             const productNode = item.product;
-            let stockStatus = 'outOfStock';
-            let overallStockStatus = 'outOfStock';
 
-            if (productNode) {
-                overallStockStatus = productNode.overallStockStatus;
-                const sizeMatch = productNode.sizes?.find(s => s.size === item.size);
-                if (sizeMatch) {
-                    stockStatus = sizeMatch.stockStatus;
-                }
+            // null means Mongoose couldn't populate — it's a Fresh Item, always inStock
+            if (!productNode || typeof productNode !== 'object') {
+                return { ...item, stockStatus: 'inStock', overallStockStatus: 'inStock' };
             }
+
+            const overallStockStatus = productNode.overallStockStatus || 'inStock';
+            const sizeMatch = productNode.sizes?.find(s => s.size === item.size);
+            const stockStatus = sizeMatch ? sizeMatch.stockStatus : 'inStock';
 
             return {
                 ...item,
-                product: productNode?._id || item.product,
+                product: productNode._id || item.product,
                 stockStatus,
                 overallStockStatus
             };
