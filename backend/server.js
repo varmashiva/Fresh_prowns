@@ -15,6 +15,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import communityRoutes from './routes/communityRoutes.js';
+import itemRoutes from './routes/itemRoutes.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/communities', communityRoutes);
+app.use('/api/items', itemRoutes);
 app.get("/",(req,res)=>{
     res.send("Hello Fresh Prowns!");
 })
