@@ -74,7 +74,7 @@ const LoginScreen = () => {
     };
 
     const googleLoginHandler = () => {
-        window.location.href = 'https://fresh-prowns.onrender.com/api/auth/google';
+        window.location.href = 'https://farmtohome-fresh.onrender.com/api/auth/google';
     };
 
     return (

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const defaultUrl = isLocalhost ? 'http://localhost:5005/api' : 'https://fresh-prowns.onrender.com/api';
+const defaultUrl = isLocalhost ? 'http://localhost:5005/api' : 'https://farmtohome-fresh.onrender.com/api';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || defaultUrl,

@@ -110,11 +110,30 @@ const ProductScreen = () => {
         </div>
     );
 
-    const currentSizeData = isPremium 
-        ? (product.sizes?.find(s => s.size === selectedSize) || { price: 0, stockStatus: 'outOfStock', description: 'Description unavailable.' })
-        : { price: product.marketPrice, stockStatus: 'inStock', description: product.description || '' };
-    
-    const stockStatus = isPremium ? currentSizeData.stockStatus : 'inStock';
+    const getSelectedSizeData = () => {
+        if (isPremium) {
+            const sizeData = product.sizes?.find(s => s.size === selectedSize) || { price: 0, stockStatus: 'outOfStock', description: 'Description unavailable.' };
+            const discount = product.discount || 0;
+            return {
+                ...sizeData,
+                originalPrice: sizeData.price,
+                price: discount > 0 ? Math.round(sizeData.price * (1 - discount / 100)) : sizeData.price,
+                discount
+            };
+        } else {
+            const discount = product.discount || 0;
+            return {
+                originalPrice: product.marketPrice,
+                price: discount > 0 ? Math.round(product.marketPrice * (1 - discount / 100)) : product.marketPrice,
+                stockStatus: 'inStock',
+                description: product.description || '',
+                discount
+            };
+        }
+    };
+
+    const currentSizeData = getSelectedSizeData();
+    const stockStatus = currentSizeData.stockStatus;
     const isAvailable = stockStatus === 'inStock';
     const isOverallInStock = isPremium ? (product.overallStockStatus === 'inStock') : true;
 
@@ -235,11 +254,13 @@ const ProductScreen = () => {
                                         <div className="flex flex-col">
                                             <span className="text-[#777] font-[700] text-[10px] md:text-[11px] uppercase tracking-[0.2em] font-mono mb-3">Price Value</span>
                                             <div className="flex items-center gap-4">
-                                                <span className="text-white font-[900] text-[40px] md:text-[52px] tracking-tighter leading-none">₹{Math.round(product.marketPrice * qty)}</span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[#555] text-[14px] md:text-[16px] line-through font-mono leading-none mb-1">₹{Math.round(product.marketPrice * qty * 1.3)}</span>
-                                                    <span className="text-green-500 text-[10px] font-bold tracking-widest uppercase">SAVE 30%</span>
-                                                </div>
+                                                <span className="text-white font-[900] text-[40px] md:text-[52px] tracking-tighter leading-none">₹{Math.round(currentSizeData.price * qty)}</span>
+                                                {currentSizeData.discount > 0 && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[#555] text-[14px] md:text-[16px] line-through font-mono leading-none mb-1">₹{Math.round(currentSizeData.originalPrice * qty)}</span>
+                                                        <span className="text-green-500 text-[10px] font-bold tracking-widest uppercase">SAVE {currentSizeData.discount}%</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end">
@@ -450,8 +471,11 @@ const ProductScreen = () => {
                                 <div className="py-6 border-b border-[#222] flex justify-between items-center">
                                     <div className="flex flex-col">
                                         <span className="text-[#777] font-[600] text-[10px] uppercase tracking-widest font-mono mb-1">Price</span>
-                                        <div className="flex items-baseline gap-1">
+                                        <div className="flex items-baseline gap-2">
                                             <span className="text-white font-[800] text-[32px] md:text-[40px] tracking-tighter leading-none">₹{currentSizeData.price}</span>
+                                            {currentSizeData.discount > 0 && (
+                                                <span className="text-[#555] text-[16px] md:text-[18px] line-through font-mono">₹{currentSizeData.originalPrice}</span>
+                                            )}
                                             <span className="text-[#777] text-sm font-[600] tracking-wider uppercase">/kg</span>
                                         </div>
                                     </div>
