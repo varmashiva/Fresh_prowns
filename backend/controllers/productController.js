@@ -89,13 +89,13 @@ export const updateProductSize = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
     try {
-        const { name, images, marketPrice, margin, sizes } = req.body;
+        const { name, images, marketPrice, discount, sizes } = req.body;
 
         const product = new Product({
             name: name || 'Sample name',
             images: images || [],
             marketPrice: marketPrice || 0,
-            margin: margin || 0,
+            discount: discount || 0,
             sizes: sizes || [
                 { size: 'Small', price: 0, stockStatus: 'inStock', description: 'Small size' },
                 { size: 'Medium', price: 0, stockStatus: 'inStock', description: 'Medium size' },
@@ -119,7 +119,7 @@ export const createProduct = async (req, res) => {
 // @desc    Update a product
 // @route   PUT /api/products/:id
 export const updateProduct = async (req, res) => {
-    const { name, images, marketPrice, margin, sizes } = req.body;
+    const { name, images, marketPrice, discount, sizes } = req.body;
 
     try {
         const product = await Product.findById(req.params.id);
@@ -129,7 +129,7 @@ export const updateProduct = async (req, res) => {
             if (images) product.images = images;
 
             if (marketPrice !== undefined) product.marketPrice = marketPrice;
-            if (margin !== undefined) product.margin = margin;
+            if (discount !== undefined) product.discount = discount;
             if (sizes) product.sizes = sizes;
 
             const updatedProduct = await product.save();

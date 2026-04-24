@@ -5,8 +5,8 @@ const DailySpecialCard = ({ item, handleAddItemToCart }) => {
     const [selectedWeight, setSelectedWeight] = useState('500g');
 
     const weightMultiplier = selectedWeight === '500g' ? 0.5 : 1;
-    const salePrice = Math.round(item.marketPrice * weightMultiplier);
-    const oldPrice = Math.round(salePrice * 1.3);
+    const oldPrice = Math.round(item.marketPrice * weightMultiplier);
+    const salePrice = item.discount > 0 ? Math.round(oldPrice * (1 - item.discount / 100)) : oldPrice;
 
     return (
         <div className="bg-[#0c0c0c] border border-[#222] rounded-[18px] md:rounded-[24px] p-3 md:p-4 flex flex-col hover:border-[#444] transition-colors duration-500 shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden group/item">
@@ -66,7 +66,9 @@ const DailySpecialCard = ({ item, handleAddItemToCart }) => {
                 {/* Bottom Price elements */}
                 <div className="flex items-center gap-3 md:gap-3 mt-auto pt-2 border-t border-[#1a1a1a]">
                     <span className="text-white font-[800] text-[24px] md:text-[24px] tracking-tight">₹{salePrice}</span>
-                    <span className="text-[#555] font-[600] text-[14px] md:text-[15px] line-through">₹{oldPrice}</span>
+                    {item.discount > 0 && (
+                        <span className="text-[#555] font-[600] text-[14px] md:text-[15px] line-through">₹{oldPrice}</span>
+                    )}
                 </div>
             </div>
         </div>

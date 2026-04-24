@@ -33,12 +33,12 @@ export const getItemById = async (req, res) => {
 // @access  Private/Admin
 export const createItem = async (req, res) => {
     try {
-        const { name, marketPrice, margin, description, usageInstructions, shelfLifeStorage, images } = req.body;
+        const { name, marketPrice, discount, description, usageInstructions, shelfLifeStorage, images } = req.body;
 
         const item = new Item({
             name,
             marketPrice,
-            margin,
+            discount,
             description,
             usageInstructions,
             shelfLifeStorage,
@@ -67,7 +67,7 @@ export const updateItem = async (req, res) => {
         if (item) {
             item.name = req.body.name || item.name;
             item.marketPrice = req.body.marketPrice ?? item.marketPrice;
-            item.margin = req.body.margin ?? item.margin;
+            item.discount = req.body.discount ?? item.discount;
             item.description = req.body.description ?? item.description;
             item.usageInstructions = req.body.usageInstructions ?? item.usageInstructions;
             item.shelfLifeStorage = req.body.shelfLifeStorage ?? item.shelfLifeStorage;

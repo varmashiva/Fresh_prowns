@@ -11,7 +11,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://fresh-prowns.onrender.com',
+        target: 'https://farmtohome-fresh.onrender.com',
         changeOrigin: true
       }
     }

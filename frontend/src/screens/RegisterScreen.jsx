@@ -65,7 +65,7 @@ const RegisterScreen = () => {
 
     const googleSignupHandler = () => {
         // The backend handles user creation automatically during oauth flow
-        window.location.href = 'https://fresh-prowns.onrender.com/api/auth/google';
+        window.location.href = 'https://farmtohome-fresh.onrender.com/api/auth/google';
     };
 
     return (

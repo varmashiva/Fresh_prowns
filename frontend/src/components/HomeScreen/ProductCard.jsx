@@ -25,7 +25,8 @@ const ProductCard = ({ product, addToCart, navigate }) => {
         return `${q} kg`;
     };
 
-    const displayPrice = defaultSize ? defaultSize.price : 0;
+    const originalDisplayPrice = defaultSize ? defaultSize.price : 0;
+    const discountedDisplayPrice = product.discount > 0 ? Math.round(originalDisplayPrice * (1 - product.discount / 100)) : originalDisplayPrice;
 
     return (
         <motion.div
@@ -66,7 +67,10 @@ const ProductCard = ({ product, addToCart, navigate }) => {
                     <div className="flex flex-col items-start sm:items-end text-left sm:text-right flex-shrink-0">
                         <span className="text-[#777] text-[10px] md:text-[11px] font-[600] uppercase tracking-widest mb-1">Starting At</span>
                         <div className="flex items-baseline gap-1 md:gap-2">
-                            <span className="text-white font-[800] text-2xl md:text-[32px] lg:text-[42px] tracking-tighter leading-none">₹{displayPrice}</span>
+                            <span className="text-white font-[800] text-2xl md:text-[32px] lg:text-[42px] tracking-tighter leading-none">₹{discountedDisplayPrice}</span>
+                            {product.discount > 0 && (
+                                <span className="text-[#555] font-[600] text-sm md:text-lg lg:text-xl line-through">₹{originalDisplayPrice}</span>
+                            )}
                             <span className="text-[#777] text-xs md:text-sm lg:text-base font-[600] tracking-normal uppercase">/ kg</span>
                         </div>
                     </div>
@@ -94,7 +98,13 @@ const ProductCard = ({ product, addToCart, navigate }) => {
                                             {isSelectedSize && <div className="w-1.5 h-1.5 rounded-full bg-black"></div>}
                                         </div>
                                         <span className={isSelectedSize ? 'text-white' : 'text-white/70'}>{sizeObj.size}</span>
-                                        <span className={`ml-auto font-mono ${isSelectedSize ? 'text-green-400' : 'text-white/60'}`}>₹{sizeObj.price}<span className="text-[10px] font-sans opacity-60 ml-0.5">/kg</span></span>
+                                        <div className="ml-auto flex items-baseline gap-2">
+                                            <span className={`font-mono ${isSelectedSize ? 'text-green-400' : 'text-white/60'}`}>₹{product.discount > 0 ? Math.round(sizeObj.price * (1 - product.discount / 100)) : sizeObj.price}</span>
+                                            {product.discount > 0 && (
+                                                <span className="text-[#555] font-mono text-[11px] line-through">₹{sizeObj.price}</span>
+                                            )}
+                                            <span className="text-[10px] font-sans opacity-60 ml-0.5">/kg</span>
+                                        </div>
                                     </div>
                                     <div className={`pl-7 text-[11px] font-[600] tracking-widest uppercase ${outOfStock ? 'text-red-500/80' : isSelectedSize ? 'text-white/60' : 'text-white/30'}`}>
                                         {outOfStock ? 'Sold Out' : isSelectedSize ? 'Cleaned & Ready' : 'Select Variant'}
@@ -131,7 +141,8 @@ const ProductCard = ({ product, addToCart, navigate }) => {
                         {isOverallInStock ? (
                             <button
                                 onClick={async () => {
-                                    const finalPrice = selectedSizeData ? selectedSizeData.price : 0;
+                                    const basePrice = selectedSizeData ? selectedSizeData.price : 0;
+                                    const finalPrice = product.discount > 0 ? Math.round(basePrice * (1 - product.discount / 100)) : basePrice;
                                     const success = await addToCart(product, selectedSize, finalPrice, qty);
                                     if (success) navigate('/cart');
                                     else navigate('/login');
@@ -140,7 +151,9 @@ const ProductCard = ({ product, addToCart, navigate }) => {
                             >
                                 <span>Add To Cart</span>
                                 <span className="opacity-30">|</span>
-                                <span className="font-mono">₹{selectedSizeData?.price * qty || 0}</span>
+                                <span className="font-mono">
+                                    ₹{Math.round((selectedSizeData ? (product.discount > 0 ? selectedSizeData.price * (1 - product.discount / 100) : selectedSizeData.price) : 0) * qty)}
+                                </span>
                             </button>
                         ) : (
                             <button disabled className="w-full bg-[#1a1a1a] text-[#555] font-[900] py-[12px] md:py-[18px] rounded-[16px] text-center cursor-not-allowed uppercase tracking-[0.15em] text-[11px] md:text-[13px] border border-[#222]">Sold Out</button>

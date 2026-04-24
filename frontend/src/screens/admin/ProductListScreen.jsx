@@ -26,7 +26,7 @@ const ProductListScreen = () => {
     const [newItem, setNewItem] = useState({
         name: '',
         marketPrice: 0,
-        margin: 0,
+        discount: 0,
         description: '',
         usageInstructions: '',
         shelfLifeStorage: '',
@@ -37,7 +37,7 @@ const ProductListScreen = () => {
     const [newProduct, setNewProduct] = useState({
         name: '',
         marketPrice: 0,
-        margin: 0,
+        discount: 0,
         images: [],
         sizes: JSON.parse(JSON.stringify(defaultSizes))
     });
@@ -198,7 +198,7 @@ const ProductListScreen = () => {
             setNewItem({
                 name: '',
                 marketPrice: 0,
-                margin: 0,
+                discount: 0,
                 description: '',
                 usageInstructions: '',
                 shelfLifeStorage: '',
@@ -220,7 +220,7 @@ const ProductListScreen = () => {
             setNewProduct({
                 name: '',
                 marketPrice: 0,
-                margin: 0,
+                discount: 0,
                 images: [],
                 sizes: JSON.parse(JSON.stringify(defaultSizes))
             });
@@ -430,14 +430,14 @@ const ProductListScreen = () => {
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Margin (%)</label>
+                                            <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Discount (%)</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 max="100"
                                                 required
-                                                value={newItem.margin}
-                                                onChange={(e) => setNewItem({ ...newItem, margin: Number(e.target.value) })}
+                                                value={newItem.discount}
+                                                onChange={(e) => setNewItem({ ...newItem, discount: Number(e.target.value) })}
                                                 className="w-full px-4 py-3 md:py-4 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300"
                                             />
                                         </div>
@@ -579,14 +579,14 @@ const ProductListScreen = () => {
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Margin (%)</label>
+                                            <label className="text-[10px] md:text-[11px] font-[600] tracking-widest text-[#666] uppercase font-mono">Discount (%)</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 max="100"
                                                 required
-                                                value={newProduct.margin}
-                                                onChange={(e) => setNewProduct({ ...newProduct, margin: Number(e.target.value) })}
+                                                value={newProduct.discount}
+                                                onChange={(e) => setNewProduct({ ...newProduct, discount: Number(e.target.value) })}
                                                 className="w-full px-4 py-3 md:py-4 bg-[#111] border border-[#333] rounded-[4px] text-white text-[12px] md:text-[14px] font-mono focus:outline-none focus:border-white/50 transition duration-300"
                                             />
                                         </div>
@@ -880,14 +880,14 @@ const ProductListScreen = () => {
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[9px] uppercase tracking-widest font-mono text-[#555]">Margin</span>
+                                            <span className="text-[9px] uppercase tracking-widest font-mono text-[#555]">Discount</span>
                                             <div className="flex items-center bg-[#0c0c0c] border border-[#222] rounded-[6px] px-3">
                                                 <span className="text-[#666] font-mono text-[14px] pr-1">%</span>
                                                 <input 
                                                     type="number"
-                                                    defaultValue={item.margin}
+                                                    defaultValue={item.discount}
                                                     onBlur={(e) => {
-                                                        if(Number(e.target.value) !== item.margin) updateItemHandler(item._id, { margin: Number(e.target.value) });
+                                                        if(Number(e.target.value) !== item.discount) updateItemHandler(item._id, { discount: Number(e.target.value) });
                                                     }}
                                                     className="bg-transparent text-[#eaeaea] font-mono font-[800] text-[15px] py-2 w-full focus:outline-none"
                                                 />
