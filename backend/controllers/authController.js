@@ -88,7 +88,7 @@ const getOAuthClient = () => {
         oAuth2Client = new OAuth2Client(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
-            'https://farmtohome-fresh.onrender.com/api/auth/google/callback'
+            process.env.GOOGLE_CALLBACK_URL
         );
     }
     return oAuth2Client;
